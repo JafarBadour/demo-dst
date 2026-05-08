@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Sparse Training Demo</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div>
+          <h1>Dynamic Sparse Training Demo</h1>
+          <p class="subtitle">
+            Sparse MLP training with rewiring (RigL / SET), live metrics, and
+            forward-backward animation.
+          </p>
+        </div>
+        <div class="badge">8-min walkthrough ready</div>
+      </header>
+
+      <main class="layout">
+        <section class="card intro-card">
+          <h2>What is Dynamic Sparse Training?</h2>
+          <ul>
+            <li>
+              Start with a network where only a fraction of weights are active.
+            </li>
+            <li>
+              Train only active weights, while inactive edges stay at zero.
+            </li>
+            <li>
+              Periodically remove weak edges and grow new promising edges.
+            </li>
+            <li>
+              Goal: near-dense performance with much lower active parameter
+              count.
+            </li>
+          </ul>
+          <div class="intro-note">
+            Demo behavior is intentionally small/fast for live presentations.
+          </div>
+        </section>
+
+        <section class="card controls-card">
+          <h2>Controls</h2>
+          <div class="control-grid">
+            <label>
+              Training Mode
+              <select id="modeSelect">
+                <option value="supervised">Supervised (XOR)</option>
+                <option value="reinforcement">Reinforcement (Bandit)</option>
+                <option value="selfsupervised">Self-Supervised (Denoise)</option>
+              </select>
+            </label>
+
+            <label>
+              Rewiring Method
+              <select id="methodSelect">
+                <option value="rigl">RigL</option>
+                <option value="set">SET</option>
+              </select>
+            </label>
+
+            <label>
+              Sparsity: <span id="sparsityValue">50%</span>
+              <input id="sparsitySlider" type="range" min="25" max="75" value="50" />
+            </label>
+
+            <label>
+              Rewire Every (epochs)
+              <input id="rewireEveryInput" type="number" min="1" max="40" value="15" />
+            </label>
+
+            <label>
+              Speed
+              <input id="speedSlider" type="range" min="1" max="5" value="3" />
+            </label>
+          </div>
+
+          <div class="buttons">
+            <button id="playBtn" class="primary">Play</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="stepBtn">Step</button>
+            <button id="resetBtn">Reset</button>
+          </div>
+        </section>
+
+        <section class="card network-card">
+          <div class="card-head">
+            <h2>Sparse MLP Connectivity</h2>
+            <div id="phaseBadge" class="phase">Idle</div>
+          </div>
+          <canvas id="networkCanvas" width="820" height="340"></canvas>
+          <div class="legend">
+            <span><i class="dot ff"></i> Feedforward pulse</span>
+            <span><i class="dot bp"></i> Backprop pulse</span>
+            <span><i class="dot rw"></i> Rewired edge</span>
+          </div>
+        </section>
+
+        <section class="card metrics-card">
+          <div class="card-head">
+            <h2>Metrics</h2>
+            <div id="epochReadout">Epoch 0</div>
+          </div>
+          <canvas id="metricsCanvas" width="820" height="260"></canvas>
+          <div class="stats" id="statsReadout"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>

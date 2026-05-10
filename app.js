@@ -21,14 +21,27 @@ const ui = {
   method: document.getElementById("methodSelect"),
   sparsity: document.getElementById("sparsitySlider"),
   sparsityValue: document.getElementById("sparsityValue"),
+  sparsityNote: document.getElementById("sparsityNote"),
   rewireEvery: document.getElementById("rewireEveryInput"),
   speed: document.getElementById("speedSlider"),
   play: document.getElementById("playBtn"),
   pause: document.getElementById("pauseBtn"),
   step: document.getElementById("stepBtn"),
   reset: document.getElementById("resetBtn"),
+  advancedToggle: document.getElementById("advancedToggleBtn"),
+  advancedPanel: document.getElementById("advancedPanel"),
+  architectureInput: document.getElementById("architectureInput"),
+  applyArchitecture: document.getElementById("applyArchitectureBtn"),
+  resetArchitecture: document.getElementById("resetArchitectureBtn"),
+  architectureStatus: document.getElementById("architectureStatus"),
   epochReadout: document.getElementById("epochReadout"),
   statsReadout: document.getElementById("statsReadout"),
+  flopsReadout: document.getElementById("flopsReadout"),
+  flopsDenseReadout: document.getElementById("flopsDenseReadout"),
+  flopsSavedReadout: document.getElementById("flopsSavedReadout"),
+  memoryReadout: document.getElementById("memoryReadout"),
+  memoryDenseReadout: document.getElementById("memoryDenseReadout"),
+  memorySavedReadout: document.getElementById("memorySavedReadout"),
   phaseBadge: document.getElementById("phaseBadge"),
   networkCanvas: document.getElementById("networkCanvas"),
   metricsCanvas: document.getElementById("metricsCanvas"),
@@ -46,12 +59,28 @@ const state = {
   method: "rigl",
   sparsity: 0.5,
   rewireEvery: 8,
-  speed: 3,
+  speed: 80,
   history: [],
   rewireEpochs: [],
   model: null,
   runtime: null,
   vis: null,
+  architectureSpec: null,
+  usage: {
+    denseFlopsLive: 0,
+    sparseFlopsLive: 0,
+    denseMemoryPeakLive: 0,
+    sparseMemoryPeakLive: 0,
+    flopsSavedLive: 0,
+    memorySavedLive: 0,
+  },
+};
+
+const DEFAULT_ARCHITECTURE_SPEC = {
+  layer_1: {
+    neurons: 16,
+    activation: "tanh",
+  },
 };
 
 function reachedPerfectAccuracy() {
@@ -85,11 +114,131 @@ function dtanh(x) {
   return 1 - t * t;
 }
 
+function relu(x) {
+  return Math.max(0, x);
+}
+
+function drelu(x) {
+  return x > 0 ? 1 : 0;
+}
+
 function clamp(v, lo, hi) {
   return Math.max(lo, Math.min(hi, v));
 }
 
-function createLayer(inDim, outDim, density) {
+function formatCount(v) {
+  const abs = Math.abs(v);
+  if (abs >= 1e9) return `${(v / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${(v / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${(v / 1e3).toFixed(1)}K`;
+  return `${Math.round(v)}`;
+}
+
+function formatBytes(v) {
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let n = Math.max(0, v);
+  let idx = 0;
+  while (n >= 1024 && idx < units.length - 1) {
+    n /= 1024;
+    idx += 1;
+  }
+  const digits = idx === 0 ? 0 : idx === 1 ? 1 : 2;
+  return `${n.toFixed(digits)} ${units[idx]}`;
+}
+
+function defaultArchitectureText() {
+  return JSON.stringify(DEFAULT_ARCHITECTURE_SPEC, null, 2);
+}
+
+function setArchitectureStatus(message, isError = false) {
+  ui.architectureStatus.textContent = message;
+  ui.architectureStatus.classList.toggle("error", isError);
+}
+
+function normalizeArchitectureSpec(rawSpec) {
+  const entries = [];
+  if (Array.isArray(rawSpec.layers)) {
+    for (let i = 0; i < rawSpec.layers.length; i += 1) {
+      entries.push([`layer_${i + 1}`, rawSpec.layers[i]]);
+    }
+  } else if (rawSpec && typeof rawSpec === "object") {
+    const keys = Object.keys(rawSpec)
+      .filter((k) => /^layer_\d+$/i.test(k))
+      .sort((a, b) => Number(a.split("_")[1]) - Number(b.split("_")[1]));
+    for (const key of keys) entries.push([key, rawSpec[key]]);
+  }
+  if (entries.length === 0) throw new Error("Add at least one layer entry (layer_1, layer_2, ...) or a layers array.");
+
+  const layers = entries.map(([name, cfg]) => {
+    if (!cfg || typeof cfg !== "object") {
+      throw new Error(`${name}: expected an object with neurons and activation.`);
+    }
+    const neurons = Number(cfg.neurons);
+    const activation = String(cfg.activation || "").toLowerCase();
+    if (!Number.isInteger(neurons) || neurons <= 0) {
+      throw new Error(`${name}.neurons must be an integer > 0.`);
+    }
+    if (!["relu", "tanh"].includes(activation)) {
+      throw new Error(`${name}.activation must be "relu" or "tanh".`);
+    }
+    return { neurons, activation };
+  });
+  return layers;
+}
+
+function applyHiddenActivation(z, activation) {
+  return activation === "relu" ? relu(z) : tanh(z);
+}
+
+function hiddenActivationDerivative(z, activation) {
+  return activation === "relu" ? drelu(z) : dtanh(z);
+}
+
+function updateSparsityStatus() {
+  const pct = Math.round(state.sparsity * 100);
+  let note = "Balanced sparsity";
+  let isWarn = false;
+  if (pct > 75) {
+    note = "High sparsity";
+    isWarn = true;
+  } else if (pct < 25) {
+    note = "Low sparsity";
+    isWarn = true;
+  }
+  ui.sparsityNote.textContent = note;
+  ui.sparsityNote.classList.toggle("warn", isWarn);
+  ui.sparsityValue.classList.toggle("warn", isWarn);
+  ui.sparsity.style.accentColor = isWarn ? "#ff6b6b" : "#5aa8ff";
+}
+
+function updateLiveUsage(runtime, rewireCount) {
+  const conn = countActiveConnections(state.model);
+  const denseConn = conn.total;
+  const sparseConn = conn.active;
+
+  const opsPerConnPerBatch = 4;
+  const denseFlops = runtime.batches * denseConn * opsPerConnPerBatch;
+  const sparseBaseFlops = runtime.batches * sparseConn * opsPerConnPerBatch;
+  const rewireFlopOverhead = rewireCount > 0 ? rewireCount * 40 : 0;
+  const sparseFlops = sparseBaseFlops + rewireFlopOverhead;
+
+  const bytesPerWeight = 4;
+  const densePeakMemory = denseConn * bytesPerWeight;
+  const sparseBaseMemory = sparseConn * bytesPerWeight;
+  const sparsePeakMemory = rewireCount > 0 ? sparseBaseMemory * 1.05 : sparseBaseMemory;
+
+  const flopsSaved = denseFlops > 0 ? (1 - sparseFlops / denseFlops) * 100 : 0;
+  const memorySaved = densePeakMemory > 0 ? (1 - sparsePeakMemory / densePeakMemory) * 100 : 0;
+
+  state.usage.denseFlopsLive = denseFlops;
+  state.usage.sparseFlopsLive = sparseFlops;
+  state.usage.denseMemoryPeakLive = densePeakMemory;
+  state.usage.sparseMemoryPeakLive = sparsePeakMemory;
+  state.usage.flopsSavedLive = flopsSaved;
+  state.usage.memorySavedLive = memorySaved;
+}
+
+function createLayer(inDim, outDim, density, activation = null) {
   const w = [];
   const b = [];
   const m = [];
@@ -118,26 +267,33 @@ function createLayer(inDim, outDim, density) {
     const [o, i] = allIdx[k];
     m[o][i] = true;
   }
-  return { inDim, outDim, w, b, m, gradScore };
+  return { inDim, outDim, w, b, m, gradScore, activation };
 }
 
 function createModel(mode, sparsity) {
   const density = 1 - sparsity;
-  let dims;
+  let inputDim;
+  let outputDim;
   let outType;
   if (mode === "supervised") {
-    dims = [2, 16, 1];
+    inputDim = 2;
+    outputDim = 1;
     outType = "binary";
   } else if (mode === "reinforcement") {
-    dims = [3, 18, 3];
+    inputDim = 3;
+    outputDim = 3;
     outType = "policy";
   } else {
-    dims = [2, 16, 2];
+    inputDim = 2;
+    outputDim = 2;
     outType = "regression";
   }
+  const hiddenLayers = state.architectureSpec || normalizeArchitectureSpec(DEFAULT_ARCHITECTURE_SPEC);
+  const dims = [inputDim, ...hiddenLayers.map((d) => d.neurons), outputDim];
   const layers = [];
   for (let l = 0; l < dims.length - 1; l += 1) {
-    layers.push(createLayer(dims[l], dims[l + 1], density));
+    const activation = l < hiddenLayers.length ? hiddenLayers[l].activation : null;
+    layers.push(createLayer(dims[l], dims[l + 1], density, activation));
   }
   return { layers, dims, outType };
 }
@@ -158,7 +314,7 @@ function forward(model, x) {
     }
     zs.push(z);
     if (l < model.layers.length - 1) {
-      acts.push(z.map((v) => tanh(v)));
+      acts.push(z.map((v) => applyHiddenActivation(v, layer.activation)));
     } else if (model.outType === "binary") {
       acts.push([sigmoid(z[0])]);
     } else if (model.outType === "policy") {
@@ -227,7 +383,8 @@ function backwardAndUpdate(model, x, target, config) {
         for (let o = 0; o < layer.outDim; o += 1) {
           if (layer.m[o][i]) accDelta += delta[o] * layer.w[o][i];
         }
-        prevDelta[i] = accDelta * dtanh(zs[l - 1][i]);
+        const prevLayerActivation = model.layers[l - 1].activation;
+        prevDelta[i] = accDelta * hiddenActivationDerivative(zs[l - 1][i], prevLayerActivation);
       }
       deltas[l - 1] = prevDelta;
     }
@@ -417,6 +574,7 @@ function runEpoch() {
   const rewireChanges = maybeRewire();
   if (rewireChanges.length > 0) state.rewireEpochs.push(state.epoch);
   const evalNow = rt.evaluate(state.model);
+  updateLiveUsage(rt, rewireChanges.length);
   state.history.push({
     epoch: state.epoch,
     loss: 0.45 * lossMean + 0.55 * evalNow.loss,
@@ -680,6 +838,12 @@ function updateReadout() {
   const dens = ((c.active / c.total) * 100).toFixed(1);
   const last = state.history.at(-1) || { loss: 0, acc: 0 };
   const metricName = state.mode === "reinforcement" ? "Reward" : "Accuracy";
+  ui.flopsReadout.textContent = formatCount(state.usage.sparseFlopsLive);
+  ui.flopsDenseReadout.textContent = `Dense: ${formatCount(state.usage.denseFlopsLive)}`;
+  ui.flopsSavedReadout.textContent = `Live: ${state.usage.flopsSavedLive.toFixed(1)}% saved vs dense`;
+  ui.memoryReadout.textContent = formatBytes(state.usage.sparseMemoryPeakLive);
+  ui.memoryDenseReadout.textContent = `Dense: ${formatBytes(state.usage.denseMemoryPeakLive)}`;
+  ui.memorySavedReadout.textContent = `Live: ${state.usage.memorySavedLive.toFixed(1)}% saved vs dense`;
   ui.statsReadout.textContent =
     `Method: ${state.method.toUpperCase()}  |  Active: ${c.active}/${c.total} (${dens}% density)  |  Loss: ${last.loss.toFixed(
       4
@@ -687,7 +851,7 @@ function updateReadout() {
 }
 
 function frame() {
-  state.pulseT += 1 + state.speed * 0.6;
+  state.pulseT += 1 + (state.speed / 100) * 4;
   drawNetwork();
   drawMetrics();
   updateReadout();
@@ -728,8 +892,10 @@ function play() {
     return;
   }
   state.running = true;
-  const base = 900;
-  const period = Math.max(140, base - state.speed * 150);
+  const minPeriod = 120;
+  const maxPeriod = 980;
+  const ratio = clamp(state.speed / 100, 0, 1);
+  const period = Math.round(maxPeriod - (maxPeriod - minPeriod) * ratio);
   state.timer = setInterval(stepOnce, period);
 }
 
@@ -748,9 +914,46 @@ function rebuildModel() {
   state.rewireEpochs = [];
   state.lastRewireEpoch = -999;
   state.phase = "idle";
+  state.usage = {
+    denseFlopsLive: 0,
+    sparseFlopsLive: 0,
+    denseMemoryPeakLive: 0,
+    sparseMemoryPeakLive: 0,
+    flopsSavedLive: 0,
+    memorySavedLive: 0,
+  };
   state.model = createModel(state.mode, state.sparsity);
   state.runtime = createRuntime(state.mode);
   state.vis = computeNodeLayout();
+  updateLiveUsage(state.runtime, 0);
+}
+
+function toggleAdvancedPanel() {
+  const nowHidden = !ui.advancedPanel.classList.contains("hidden");
+  ui.advancedPanel.classList.toggle("hidden", nowHidden);
+  ui.advancedToggle.innerHTML = nowHidden ? "&#9881; Advanced" : "&#9881; Hide Advanced";
+}
+
+function applyArchitectureFromEditor() {
+  try {
+    const parsed = JSON.parse(ui.architectureInput.value);
+    const normalized = normalizeArchitectureSpec(parsed);
+    state.architectureSpec = normalized;
+    setArchitectureStatus(`Applied ${normalized.length} hidden layer(s).`);
+    syncFromInputs();
+    rebuildModel();
+  } catch (err) {
+    setArchitectureStatus(err instanceof Error ? err.message : "Invalid JSON.", true);
+  }
+}
+
+function resetArchitectureEditor() {
+  ui.architectureInput.value = defaultArchitectureText();
+  const normalized = normalizeArchitectureSpec(DEFAULT_ARCHITECTURE_SPEC);
+  state.architectureSpec = normalized;
+  setArchitectureStatus("Reset to default template.");
+  syncFromInputs();
+  rebuildModel();
 }
 
 function syncFromInputs() {
@@ -758,8 +961,9 @@ function syncFromInputs() {
   state.method = ui.method.value;
   state.sparsity = Number(ui.sparsity.value) / 100;
   state.rewireEvery = clamp(Number(ui.rewireEvery.value) || 8, 1, 40);
-  state.speed = Number(ui.speed.value) || 3;
+  state.speed = clamp(Number(ui.speed.value) || 80, 10, 100);
   ui.sparsityValue.textContent = `${Math.round(state.sparsity * 100)}%`;
+  updateSparsityStatus();
 }
 
 ui.play.addEventListener("click", () => {
@@ -775,6 +979,9 @@ ui.reset.addEventListener("click", () => {
   syncFromInputs();
   rebuildModel();
 });
+ui.advancedToggle.addEventListener("click", toggleAdvancedPanel);
+ui.applyArchitecture.addEventListener("click", applyArchitectureFromEditor);
+ui.resetArchitecture.addEventListener("click", resetArchitectureEditor);
 
 ui.mode.addEventListener("change", () => {
   syncFromInputs();
@@ -795,6 +1002,8 @@ ui.speed.addEventListener("input", () => {
 });
 
 syncFromInputs();
+ui.architectureInput.value = defaultArchitectureText();
+state.architectureSpec = normalizeArchitectureSpec(DEFAULT_ARCHITECTURE_SPEC);
 rebuildModel();
 for (let i = 0; i < 4; i += 1) stepOnce();
 frame();

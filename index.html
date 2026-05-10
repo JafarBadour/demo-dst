@@ -3,47 +3,80 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Dynamic Sparse Training Demo</title>
+    <title>Dynamic Sparse Training</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="app-shell">
-      <header class="topbar">
-        <div>
-          <h1>Dynamic Sparse Training Demo</h1>
-          <p class="subtitle">
-            Sparse MLP training with rewiring (RigL / SET), live metrics, and
-            forward-backward animation.
-          </p>
-        </div>
-        <div class="badge">8-min walkthrough ready</div>
+    <article class="essay">
+      <header class="essay-header">
+        <p class="essay-eyebrow">Research Preview · 8-min walkthrough</p>
+        <h1>Dynamic Sparse Training</h1>
+        <p class="essay-subtitle">
+          An interactive look at how sparse neural networks rewire themselves to recover
+          dense-level behavior with far fewer active parameters.
+        </p>
       </header>
 
-      <main class="layout">
-        <section class="card intro-card">
-          <h2>What is Dynamic Sparse Training?</h2>
-          <ul>
-            <li>
-              Start with a network where only a fraction of weights are active.
-            </li>
-            <li>
-              Train only active weights, while inactive edges stay at zero.
-            </li>
-            <li>
-              Periodically remove weak edges and grow new promising edges.
-            </li>
-            <li>
-              Goal: near-dense performance with much lower active parameter
-              count.
-            </li>
-          </ul>
-          <div class="intro-note">
-            Demo behavior is intentionally small/fast for live presentations.
-          </div>
-        </section>
+      <section class="prose">
+        <h2><span class="section-number">01</span>Can sparse networks learn dense-level behavior?</h2>
+        <p>
+          This article introduces the dynamic sparsity setup we use in our research and pairs the
+          explanation with a live, in-page training demo. As the model trains, you can watch its
+          connectivity reshape in real time and see compute and memory savings update with it.
+        </p>
+        <p>
+          The underlying question is simple: how much of a dense network do we actually need?
+          Dynamic sparse training answers this empirically. We keep only a fraction of the weights
+          active and let the network discover which ones matter as training proceeds.
+        </p>
+      </section>
 
-        <section class="card controls-card">
-          <h2>Controls</h2>
+      <hr class="rule" />
+
+      <section class="prose">
+        <h2><span class="section-number">02</span>Before you run the demo</h2>
+        <p>
+          We start with a network where only a fraction of weights are active. During training,
+          only those active weights receive updates; inactive edges stay at zero. Periodically
+          the network performs a <em>rewiring step</em>: it removes weak edges and grows new
+          promising ones, so the training compute concentrates on the most useful subnetwork.
+        </p>
+        <p class="callout">
+          The model used in the demo is intentionally tiny so that an entire training run finishes
+          in a few seconds — small enough to demo live, large enough to show the dynamics clearly.
+        </p>
+      </section>
+
+      <hr class="rule" />
+
+      <section class="prose">
+        <h2><span class="section-number">03</span>How to read the visualization</h2>
+        <p>
+          The connectivity view animates each forward and backward pass: blue pulses mark
+          feedforward, pink pulses mark backprop, and yellow highlights mark the rewiring epochs
+          where weak edges are pruned and new candidate edges are grown.
+        </p>
+        <p>
+          The metrics panel tracks task loss and accuracy over time. Live FLOPs and memory
+          counters compare what the sparse model touches against what a dense model would have
+          touched, exposing the efficiency trade-off in real time.
+        </p>
+        <p>
+          Try increasing sparsity, switching the rewiring strategy, or editing the architecture
+          under the gear icon. Watch how each choice changes recovery speed and the savings
+          relative to dense training.
+        </p>
+      </section>
+
+      <hr class="rule" />
+
+      <figure class="demo-figure">
+        <figcaption class="demo-caption">
+          <span class="figure-label">Interactive · Figure 1</span>
+          <span>Live sparse MLP training with rewiring</span>
+        </figcaption>
+
+        <div class="demo-controls">
           <div class="control-grid">
             <label>
               Training Mode
@@ -64,7 +97,8 @@
 
             <label>
               Sparsity: <span id="sparsityValue">50%</span>
-              <input id="sparsitySlider" type="range" min="25" max="75" value="50" />
+              <input id="sparsitySlider" type="range" min="0" max="100" value="50" />
+              <span id="sparsityNote" class="sparsity-note">Balanced sparsity</span>
             </label>
 
             <label>
@@ -74,7 +108,7 @@
 
             <label>
               Speed
-              <input id="speedSlider" type="range" min="1" max="5" value="3" />
+              <input id="speedSlider" type="range" min="10" max="100" value="80" />
             </label>
           </div>
 
@@ -83,13 +117,33 @@
             <button id="pauseBtn">Pause</button>
             <button id="stepBtn">Step</button>
             <button id="resetBtn">Reset</button>
+            <button id="advancedToggleBtn" type="button">&#9881; Advanced</button>
           </div>
-        </section>
 
-        <section class="card network-card">
-          <div class="card-head">
-            <h2>Sparse MLP Connectivity</h2>
-            <div id="phaseBadge" class="phase">Idle</div>
+          <div id="advancedPanel" class="advanced-panel hidden">
+            <h3>Architecture JSON</h3>
+            <p class="advanced-help">
+              Define hidden layers only. Input and output sizes are still chosen by the selected
+              training mode. Allowed activations: <code>relu</code> or <code>tanh</code>.
+            </p>
+            <textarea
+              id="architectureInput"
+              class="architecture-input"
+              spellcheck="false"
+              aria-label="Advanced architecture JSON"
+            ></textarea>
+            <div class="advanced-actions">
+              <button id="applyArchitectureBtn" type="button" class="primary">Apply</button>
+              <button id="resetArchitectureBtn" type="button">Reset Template</button>
+              <span id="architectureStatus" class="architecture-status">Ready</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="demo-stage">
+          <div class="demo-stage-head">
+            <span class="stage-label">Sparse MLP Connectivity</span>
+            <span id="phaseBadge" class="phase">Idle</span>
           </div>
           <canvas id="networkCanvas" width="820" height="340"></canvas>
           <div class="legend">
@@ -97,18 +151,65 @@
             <span><i class="dot bp"></i> Backprop pulse</span>
             <span><i class="dot rw"></i> Rewired edge</span>
           </div>
-        </section>
+        </div>
 
-        <section class="card metrics-card">
-          <div class="card-head">
-            <h2>Metrics</h2>
-            <div id="epochReadout">Epoch 0</div>
+        <div class="demo-stage">
+          <div class="demo-stage-head">
+            <span class="stage-label">Metrics</span>
+            <span id="epochReadout">Epoch 0</span>
+          </div>
+          <div class="util-grid">
+            <div class="util-card">
+              <div class="util-label">FLOPs (live per epoch)</div>
+              <div id="flopsReadout" class="util-value">0</div>
+              <div id="flopsDenseReadout" class="util-dense">Dense: 0</div>
+              <div id="flopsSavedReadout" class="util-sub">Live: 0% saved vs dense</div>
+            </div>
+            <div class="util-card">
+              <div class="util-label">Peak memory (live)</div>
+              <div id="memoryReadout" class="util-value">0 B</div>
+              <div id="memoryDenseReadout" class="util-dense">Dense: 0 B</div>
+              <div id="memorySavedReadout" class="util-sub">Live: 0% saved vs dense</div>
+            </div>
           </div>
           <canvas id="metricsCanvas" width="820" height="260"></canvas>
           <div class="stats" id="statsReadout"></div>
-        </section>
-      </main>
-    </div>
+        </div>
+      </figure>
+
+      <hr class="rule" />
+
+      <section class="prose">
+        <h2><span class="section-number">04</span>Where this research goes next</h2>
+        <p>
+          The toy demo above is deliberately small, but the rewiring logic generalizes. Our
+          follow-up work pursues three threads.
+        </p>
+
+        <h3>Scaling beyond toy tasks</h3>
+        <p>
+          We apply the same rewiring logic to deeper models and larger datasets to measure
+          stability, convergence speed, and final quality under strict compute budgets.
+        </p>
+
+        <h3>Adaptive rewiring schedules</h3>
+        <p>
+          Instead of a fixed interval, we are testing trigger-based rewiring tied to gradient
+          saturation and plateau detection so that updates land where they matter most.
+        </p>
+
+        <h3>Hardware-aware sparse training</h3>
+        <p>
+          We are also investigating kernels and placement strategies that turn theoretical sparse
+          savings into measured wall-clock gains on modern accelerators.
+        </p>
+
+        <blockquote class="pullquote">
+          Can dynamic sparsity be both <em>scientifically competitive</em> and
+          <em>operationally efficient</em> at real deployment scale?
+        </blockquote>
+      </section>
+    </article>
 
     <script src="app.js"></script>
   </body>

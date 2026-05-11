@@ -18,16 +18,41 @@
       </header>
 
       <section class="prose">
-        <h2>Can sparse networks learn dense-level behavior?</h2>
+        <h2>Why dynamic sparse training?</h2>
         <p>
-          This article introduces the dynamic sparsity setup we use in our research and pairs the
-          explanation with a live, in-page training demo. As the model trains, you can watch its
-          connectivity reshape in real time and see compute and memory savings update with it.
+          Dynamic sparse training (DST) has been studied for roughly a decade, and a consistent
+          finding across that body of work is that sparse networks can match &mdash; and in some
+          settings exceed &mdash; the accuracy of their dense counterparts while using
+          substantially less memory and compute.
         </p>
         <p>
-          The underlying question is simple: how much of a dense network do we actually need?
-          Dynamic sparse training answers this empirically.
+          As neural networks become the backbone of modern AI, that combination matters in two
+          directions at once: DST eases the steep resource cost of training and serving today's
+          largest models, and the rewiring dynamics also tend to improve the metrics that govern
+          learning quality, acting as an implicit regulariser of the exploration over parameter
+          space.
         </p>
+        <p>
+          These properties open three research threads we pursue, picked up in detail at the end
+          of this article:
+        </p>
+        <ul class="bullets">
+          <li>
+            <strong>Sparse reinforcement learning.</strong>
+            Understanding how remove-and-regrow dynamics behave under non-stationary targets and
+            noisy reward signals.
+          </li>
+          <li>
+            <strong>Sparse RL for resource allocation.</strong>
+            Adapting these algorithms to allocate compute, memory, and energy inside data-centre
+            environments.
+          </li>
+          <li>
+            <strong>Hardware-aware sparse models.</strong>
+            Turning theoretical sparsity savings into measured wall-clock gains on modern
+            accelerators.
+          </li>
+        </ul>
       </section>
 
       <hr class="rule" />
@@ -53,17 +78,13 @@
           </li>
           <li>
             <strong>Rewiring step.</strong>
-            Every <em>K</em> epochs, the network removes its weakest active edges and grows the
+            Every <em>K</em> steps, the network removes its weakest active edges and grows the
             same number of new candidate edges elsewhere.
           </li>
           <li>
-            <strong>Constant parameter budget.</strong>
-            The number of active weights never changes — only their <em>identity</em> does.
-          </li>
-          <li>
-            <strong>Static vs. dynamic sparse.</strong>
-            Without rewiring, the topology is fixed at init and rarely matches dense-level
-            accuracy. Rewiring is what closes the gap.
+            <strong>Fixed sparsity budget.</strong>
+            The number of active weights never changes &mdash; only the
+            <em>connectivity pattern</em> does.
           </li>
         </ul>
 
@@ -180,7 +201,7 @@
                 filter="url(#cycleshadow)"
               />
               <text x="85" y="185">Sparse init</text>
-              <text x="85" y="210" class="sub">random mask, target sparsity</text>
+              <text x="85" y="210" class="sub">target sparsity</text>
             </g>
 
             <path
@@ -429,27 +450,36 @@
       <hr class="rule" />
 
       <section class="prose misd-section">
-        <h2>Ongoing research directions</h2>
+        <h2>Where this research goes next?</h2>
         <p>
-          Two threads extend the work shown above toward sustainable, real-world
-          deployment. Both build directly on the dynamic-sparse-training primitives
-          you just interacted with.
+          The toy demo above is deliberately small, but the rewiring logic generalises. Our
+          follow-up work pursues three threads.
+        </p>
+
+        <h3>Understanding sparse reinforcement learning</h3>
+        <p>
+          Sparse models behave differently in reinforcement learning than in supervised
+          settings: targets are non-stationary, rewards are noisy, and the policy itself
+          decides what data to collect. We characterise how remove-and-regrow dynamics
+          interact with these conditions &mdash; convergence properties across a family of
+          reward structures, the role of update frequency, and which rewiring choices stay
+          safe as the data distribution drifts.
         </p>
 
         <h3>Reinforcement learning for resource allocation</h3>
         <p>
-          Understanding sparse reinforcement-learning behaviour under operational
-          constraints, and adapting it for resource allocation in data-centre
-          contexts. The focus is on remove and regrow strategies, update frequency,
-          convergence for a family of reward functions, and related design choices.
+          Building on that understanding, we adapt sparse RL to resource-allocation
+          problems in data-centre environments &mdash; scheduling compute, memory, and
+          energy under hard operational budgets. Sparsity here is not just a model-size
+          knob but part of the optimisation: the policy and the resources it controls are
+          sized together.
         </p>
 
         <h3>Novel efficient sparse models suitable for data centres</h3>
         <p>
-          We are currently investigating hardware-aware sparse training together
-          with more advanced foundational computational blocks &mdash; kernels and
-          placement strategies that turn theoretical sparse savings into measured
-          wall-clock gains on modern accelerators.
+          Hardware-aware sparse training paired with more advanced foundational
+          computational blocks &mdash; kernels and placement strategies that turn
+          theoretical sparse savings into measured wall-clock gains on modern accelerators.
         </p>
       </section>
 

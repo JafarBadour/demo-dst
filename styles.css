@@ -475,6 +475,12 @@ canvas {
   stroke-width: 1.2;
 }
 
+.cycle-diagram .stage.init rect {
+  fill: rgba(132, 22, 23, 0.05);
+  stroke: var(--accent);
+  stroke-width: 1.4;
+}
+
 .cycle-diagram .stage text {
   font-family: Inter, system-ui, sans-serif;
   fill: var(--text);
@@ -552,25 +558,6 @@ canvas {
 
 .cite a:hover {
   text-decoration: underline;
-}
-
-.misd-section {
-  position: relative;
-}
-
-.misd-tag {
-  display: inline-block;
-  margin: 0 0 6px;
-  padding: 4px 10px;
-  font-family: Inter, system-ui, sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--accent);
-  background: rgba(132, 22, 23, 0.08);
-  border: 1px solid rgba(132, 22, 23, 0.22);
-  border-radius: 999px;
 }
 
 .references-section ol.references {

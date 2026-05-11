@@ -26,8 +26,7 @@
         </p>
         <p>
           The underlying question is simple: how much of a dense network do we actually need?
-          Dynamic sparse training answers this empirically. We keep only a fraction of the weights
-          active and let the network discover which ones matter as training proceeds.
+          Dynamic sparse training answers this empirically.
         </p>
       </section>
 
@@ -116,7 +115,7 @@
 
         <figure class="cycle-figure">
           <svg
-            viewBox="0 0 720 280"
+            viewBox="0 0 880 280"
             xmlns="http://www.w3.org/2000/svg"
             class="cycle-diagram"
             role="img"
@@ -124,7 +123,8 @@
           >
             <title id="cycle-title">Dynamic sparse training cycle</title>
             <desc id="cycle-desc">
-              A four-stage cycle: Train, Score, Remove, Grow, repeating every K rewiring steps.
+              A sparse initialization feeds into a four-stage cycle (Train, Score, Remove, Grow)
+              that repeats every K rewiring steps.
             </desc>
             <defs>
               <marker
@@ -156,104 +156,122 @@
             </defs>
 
             <path
-              d="M 635 140 C 635 100, 540 45, 470 45"
+              d="M 795 140 C 795 100, 720 45, 635 45"
               class="cycle-loop"
             />
             <path
-              d="M 250 45 C 180 45, 95 100, 95 140"
+              d="M 415 45 C 345 45, 255 100, 255 140"
               class="cycle-loop"
               marker-end="url(#cyclearrow)"
             />
 
             <g class="cycle-badge">
-              <rect x="250" y="29" width="220" height="32" rx="16" />
-              <text x="360" y="50">repeat every K rewiring steps</text>
+              <rect x="415" y="29" width="220" height="32" rx="16" />
+              <text x="525" y="50">repeat every K rewiring steps</text>
             </g>
 
-            <g class="stage">
+            <g class="stage init">
               <rect
                 x="20"
                 y="140"
-                width="150"
+                width="130"
                 height="100"
                 rx="6"
                 filter="url(#cycleshadow)"
               />
-              <circle cx="42" cy="162" r="14" class="num" />
-              <text x="42" y="167" class="num-label">1</text>
-              <text x="95" y="185">Train</text>
-              <text x="95" y="210" class="sub">update active weights</text>
+              <text x="85" y="185">Sparse init</text>
+              <text x="85" y="210" class="sub">random mask, target sparsity</text>
             </g>
 
             <path
-              d="M 175 190 L 198 190"
+              d="M 155 190 L 178 190"
               class="cycle-flow"
               marker-end="url(#cyclearrow)"
             />
 
             <g class="stage">
               <rect
-                x="200"
+                x="180"
                 y="140"
                 width="150"
                 height="100"
                 rx="6"
                 filter="url(#cycleshadow)"
               />
-              <circle cx="222" cy="162" r="14" class="num" />
-              <text x="222" y="167" class="num-label">2</text>
-              <text x="275" y="185">Score</text>
-              <text x="275" y="210" class="sub">rank by |w| or |&#8711;w|</text>
+              <circle cx="202" cy="162" r="14" class="num" />
+              <text x="202" y="167" class="num-label">1</text>
+              <text x="255" y="185">Train</text>
+              <text x="255" y="210" class="sub">update active weights</text>
             </g>
 
             <path
-              d="M 355 190 L 378 190"
+              d="M 335 190 L 358 190"
               class="cycle-flow"
               marker-end="url(#cyclearrow)"
             />
 
             <g class="stage">
               <rect
-                x="380"
+                x="360"
                 y="140"
                 width="150"
                 height="100"
                 rx="6"
                 filter="url(#cycleshadow)"
               />
-              <circle cx="402" cy="162" r="14" class="num" />
-              <text x="402" y="167" class="num-label">3</text>
-              <text x="455" y="185">Remove</text>
-              <text x="455" y="210" class="sub">drop weakest edges</text>
+              <circle cx="382" cy="162" r="14" class="num" />
+              <text x="382" y="167" class="num-label">2</text>
+              <text x="435" y="185">Score</text>
+              <text x="435" y="210" class="sub">rank by |w| or |&#8711;w|</text>
             </g>
 
             <path
-              d="M 535 190 L 558 190"
+              d="M 515 190 L 538 190"
               class="cycle-flow"
               marker-end="url(#cyclearrow)"
             />
 
             <g class="stage">
               <rect
-                x="560"
+                x="540"
                 y="140"
                 width="150"
                 height="100"
                 rx="6"
                 filter="url(#cycleshadow)"
               />
-              <circle cx="582" cy="162" r="14" class="num" />
-              <text x="582" y="167" class="num-label">4</text>
-              <text x="635" y="185">Grow</text>
-              <text x="635" y="210" class="sub">SET: random / RigL: |&#8711;|</text>
+              <circle cx="562" cy="162" r="14" class="num" />
+              <text x="562" y="167" class="num-label">3</text>
+              <text x="615" y="185">Remove</text>
+              <text x="615" y="210" class="sub">drop weakest edges</text>
+            </g>
+
+            <path
+              d="M 695 190 L 718 190"
+              class="cycle-flow"
+              marker-end="url(#cyclearrow)"
+            />
+
+            <g class="stage">
+              <rect
+                x="720"
+                y="140"
+                width="150"
+                height="100"
+                rx="6"
+                filter="url(#cycleshadow)"
+              />
+              <circle cx="742" cy="162" r="14" class="num" />
+              <text x="742" y="167" class="num-label">4</text>
+              <text x="795" y="185">Grow</text>
+              <text x="795" y="210" class="sub">SET: random / RigL: |&#8711;|</text>
             </g>
           </svg>
           <figcaption>
             <span class="figure-label">Schematic</span>
-            The DST cycle. <em>Remove</em>: SET drops the weights closest to zero from each
-            sign (sign-symmetric); RigL ranks by pure <code>|w|</code>.
-            <em>Grow</em>: SET adds new edges at random; RigL adds the inactive edges with
-            largest <code>|&#8711;w|</code>.
+            A sparse initialization seeds the network; the four-stage cycle then trains, scores,
+            removes the weakest edges, and grows replacements &mdash; repeating every
+            <em>K</em> rewiring steps.
           </figcaption>
         </figure>
 
@@ -269,7 +287,7 @@
         </ul>
         <p class="micro-note">
           The savings appear immediately; whether the model can <em>recover dense-level
-          accuracy</em> as it rewires is the central question the rest of this article addresses.
+          accuracy</em> as it rewires is what the demo below lets you watch directly.
         </p>
 
         <p class="callout">
@@ -410,164 +428,7 @@
 
       <hr class="rule" />
 
-      <section class="prose">
-        <h2>From toy demo to empirical results</h2>
-        <p>
-          The interactive figure above shows the mechanism. The question is whether it survives
-          contact with realistic models and datasets. The results below — together with a growing
-          body of literature — support a clear answer: dynamic sparse training (DST) can
-          simultaneously achieve scientific competitiveness and operational efficiency at scale.
-        </p>
-
-        <figure class="result-table-figure">
-          <figcaption class="result-table-caption">
-            <span class="figure-label">Table 1</span>
-            <span>Headline results — ResNet and ViT, dense vs. dynamic sparse training.</span>
-          </figcaption>
-          <div class="result-table-wrap">
-            <table class="results-table">
-              <thead>
-                <tr>
-                  <th>Model</th>
-                  <th>Method</th>
-                  <th class="num">Energy (Wh)</th>
-                  <th class="num">Train Acc. (%)</th>
-                  <th class="num">Eval Acc. (%)</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <th rowspan="2" class="rowhead">ResNet</th>
-                  <td>Dense</td>
-                  <td class="num">54.19</td>
-                  <td class="num">91.92</td>
-                  <td class="num">87.22</td>
-                </tr>
-                <tr class="row-dst">
-                  <td><strong>DST</strong></td>
-                  <td class="num"><strong>48.29</strong></td>
-                  <td class="num"><strong>93.96</strong></td>
-                  <td class="num"><strong>90.16</strong></td>
-                </tr>
-                <tr>
-                  <th rowspan="2" class="rowhead">ViT</th>
-                  <td>Dense</td>
-                  <td class="num">129.50</td>
-                  <td class="num">49.16</td>
-                  <td class="num">49.08</td>
-                </tr>
-                <tr class="row-dst">
-                  <td><strong>DST</strong></td>
-                  <td class="num"><strong>116.85</strong></td>
-                  <td class="num"><strong>65.04</strong></td>
-                  <td class="num"><strong>63.32</strong></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </figure>
-
-        <h3>Scientific competitiveness</h3>
-        <p>
-          Dense neural networks have long been treated as the standard for maximizing accuracy,
-          but recent research increasingly challenges that assumption. DST methods maintain a
-          <em>train–remove–regrow</em> mechanism, letting models continuously adapt their
-          connectivity and explore a larger effective parameter space during optimization. This
-          dynamic exploration — sometimes called
-          <em>in-time overparameterization</em><sup class="cite"><a href="#ref-3">3</a></sup> — allows
-          sparse models to generalize as well as, or better than, their dense counterparts despite
-          using far fewer active parameters.
-        </p>
-        <p>Our empirical experiments align with these findings:</p>
-        <ul class="bullets">
-          <li><strong>ResNet:</strong> DST improves evaluation accuracy from 87.22% → 90.16%.</li>
-          <li><strong>ViT:</strong> DST yields a substantial improvement from 49.08% → 63.32%.</li>
-        </ul>
-        <p>
-          These gains are consistent with prior work showing that DST can match or exceed dense
-          performance, and even improve robustness under challenging conditions; in some studies
-          sparse networks outperform dense ones across tasks while staying within the same
-          parameter budget.
-        </p>
-
-        <h3>Operational efficiency</h3>
-        <p>
-          A major motivation for sparsity is reducing the computational and energy cost of deep
-          learning. Sparse networks activate only a subset of parameters at each step,
-          significantly reducing memory accesses and compute requirements, which translates
-          directly into lower energy consumption and improved scalability.
-        </p>
-        <p>Our results clearly demonstrate this:</p>
-        <ul class="bullets">
-          <li><strong>ResNet:</strong> ~11% reduction in energy (54.19 → 48.29 Wh).</li>
-          <li><strong>ViT:</strong> ~10% reduction in energy (129.50 → 116.85 Wh).</li>
-        </ul>
-        <p>
-          These improvements are consistent with broader findings that DST can reduce FLOPs,
-          training time, and memory usage — sometimes by large margins — without sacrificing
-          accuracy. Recent advances in structured sparsity show that DST can also deliver real
-          hardware speedups (up to 3× inference acceleration), addressing practical deployment
-          concerns.
-        </p>
-
-        <div class="figure-grid">
-          <figure class="result-figure">
-            <img src="demo/resnet_acc%20.png" alt="ResNet training accuracy: dense vs DST" loading="lazy" />
-            <figcaption><span class="figure-label">Figure 2a</span> ResNet — training accuracy.</figcaption>
-          </figure>
-          <figure class="result-figure">
-            <img src="demo/vit_acc.png" alt="ViT training accuracy: dense vs DST" loading="lazy" />
-            <figcaption><span class="figure-label">Figure 2b</span> ViT — training accuracy.</figcaption>
-          </figure>
-          <figure class="result-figure">
-            <img src="demo/resnet_eva_acc.png" alt="ResNet evaluation accuracy: dense vs DST" loading="lazy" />
-            <figcaption><span class="figure-label">Figure 3a</span> ResNet — evaluation accuracy.</figcaption>
-          </figure>
-          <figure class="result-figure">
-            <img src="demo/vit_eva_acc.png" alt="ViT evaluation accuracy: dense vs DST" loading="lazy" />
-            <figcaption><span class="figure-label">Figure 3b</span> ViT — evaluation accuracy.</figcaption>
-          </figure>
-          <figure class="result-figure">
-            <img src="demo/resnet_energy.png" alt="ResNet cumulative training energy: dense vs DST" loading="lazy" />
-            <figcaption><span class="figure-label">Figure 4a</span> ResNet — cumulative training energy.</figcaption>
-          </figure>
-          <figure class="result-figure">
-            <img src="demo/vit_energy.png" alt="ViT cumulative training energy: dense vs DST" loading="lazy" />
-            <figcaption><span class="figure-label">Figure 4b</span> ViT — cumulative training energy.</figcaption>
-          </figure>
-        </div>
-
-        <h3>Bridging the gap to real-world deployment</h3>
-        <p>
-          Earlier concerns about sparsity focused on its limited hardware efficiency, especially
-          for unstructured sparse patterns. Modern research directions — such as energy-aware
-          sparsity — are closing this gap by making sparse computations more compatible with real
-          systems. DST also enables training under fixed resource budgets and supports scaling to
-          larger models by reallocating saved resources, which is especially relevant for
-          large-scale and energy-constrained environments.
-        </p>
-
-        <h3>Conclusion</h3>
-        <p>
-          Combining empirical evidence and prior research, dynamic sparse training is not only
-          competitive with dense training but can surpass it, while simultaneously reducing energy
-          and computational cost. Rather than introducing a trade-off, DST offers a synergistic
-          advantage: accuracy is maintained or improved through better exploration of parameter
-          space and implicit regularization, and efficiency improves through reduced computation
-          and memory usage. DST is therefore a scalable paradigm for real-world deployment,
-          particularly in the context of sustainable AI and large-scale deep learning systems.
-        </p>
-
-        <blockquote class="pullquote">
-          Dynamic sparsity is both <em>scientifically competitive</em> and
-          <em>operationally efficient</em> at real deployment scale.
-        </blockquote>
-      </section>
-
-      <hr class="rule" />
-
       <section class="prose misd-section">
-        <p class="misd-tag">MISD project</p>
         <h2>Ongoing research directions</h2>
         <p>
           Two threads extend the work shown above toward sustainable, real-world
@@ -608,12 +469,6 @@
             Rigging the lottery: Making all tickets winners.
             In <em>Proceedings of the 37th International Conference on Machine Learning</em>.
             <a href="https://arxiv.org/abs/1911.11134" target="_blank" rel="noopener">arXiv:1911.11134</a>
-          </li>
-          <li id="ref-3">
-            Liu, S., Yin, L., Mocanu, D. C., &amp; Pechenizkiy, M. (2021).
-            Do we actually need dense over-parameterization? In-time over-parameterization in sparse training.
-            In <em>Proceedings of the 38th International Conference on Machine Learning</em>.
-            <a href="https://arxiv.org/abs/2102.02887" target="_blank" rel="noopener">arXiv:2102.02887</a>
           </li>
         </ol>
       </section>

@@ -4,3 +4,7 @@ terraform.tfvars
 infra/terraform/terraform.tfvars
 tfstate.backup
 tfstate*
+
+# macOS
+.DS_Store
+**/.DS_Store

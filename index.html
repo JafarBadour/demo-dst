@@ -18,7 +18,7 @@
       </header>
 
       <section class="prose">
-        <h2><span class="section-number">01</span>Can sparse networks learn dense-level behavior?</h2>
+        <h2>Can sparse networks learn dense-level behavior?</h2>
         <p>
           This article introduces the dynamic sparsity setup we use in our research and pairs the
           explanation with a live, in-page training demo. As the model trains, you can watch its
@@ -34,13 +34,244 @@
       <hr class="rule" />
 
       <section class="prose">
-        <h2><span class="section-number">02</span>Before you run the demo</h2>
+        <h2>Before you run the demo</h2>
         <p>
-          We start with a network where only a fraction of weights are active. During training,
-          only those active weights receive updates; inactive edges stay at zero. Periodically
-          the network performs a <em>rewiring step</em>: it removes weak edges and grows new
-          promising ones, so the training compute concentrates on the most useful subnetwork.
+          Dynamic sparse training (DST) keeps only a fraction of weights active and lets the
+          network rewire itself during training instead of training a fixed dense model.
         </p>
+
+        <h3>Key concepts</h3>
+        <ul class="bullets">
+          <li>
+            <strong>Density &amp; sparsity.</strong>
+            Density is the fraction of weights that are active; sparsity is everything else.
+            E.g. <code>density = 0.2</code> ↔ <code>sparsity = 80%</code>.
+          </li>
+          <li>
+            <strong>Active vs. inactive.</strong>
+            Only active weights receive gradient updates; inactive ones stay pinned at zero,
+            contribute nothing to the forward pass, and are skipped in back-prop.
+          </li>
+          <li>
+            <strong>Rewiring step.</strong>
+            Every <em>K</em> epochs, the network removes its weakest active edges and grows the
+            same number of new candidate edges elsewhere.
+          </li>
+          <li>
+            <strong>Constant parameter budget.</strong>
+            The number of active weights never changes — only their <em>identity</em> does.
+          </li>
+          <li>
+            <strong>Static vs. dynamic sparse.</strong>
+            Without rewiring, the topology is fixed at init and rarely matches dense-level
+            accuracy. Rewiring is what closes the gap.
+          </li>
+        </ul>
+
+        <h3>Two foundational methods</h3>
+        <div class="method-cards">
+          <div class="method-card">
+            <div class="method-card-head">
+              <span class="method-name">
+                SET<sup class="cite"><a href="#ref-1">1</a></sup>
+              </span>
+              <span class="method-tag">Random regrowth</span>
+            </div>
+            <ul class="bullets compact">
+              <li>
+                <strong>Remove:</strong> smallest positive <em>and</em> largest negative
+                weights — equally from each sign (sign-symmetric magnitude).
+              </li>
+              <li><strong>Grow:</strong> sample new edges <em>uniformly at random</em>.</li>
+              <li><strong>Intuition:</strong> biology — synapses re-form stochastically.</li>
+            </ul>
+          </div>
+          <div class="method-card">
+            <div class="method-card-head">
+              <span class="method-name">
+                RigL<sup class="cite"><a href="#ref-2">2</a></sup>
+              </span>
+              <span class="method-tag">Gradient-guided regrowth</span>
+            </div>
+            <ul class="bullets compact">
+              <li>
+                <strong>Remove:</strong> smallest <code>|w|</code> in each layer
+                (sign-agnostic magnitude).
+              </li>
+              <li>
+                <strong>Grow:</strong> inactive edges with the largest
+                <code>|&#8711;w|</code> on a small batch.
+              </li>
+              <li>
+                <strong>Intuition:</strong> wake up the edges whose activation would drop the
+                loss most.
+              </li>
+            </ul>
+          </div>
+        </div>
+        <p class="micro-note">
+          Both target near-zero weights at the same fixed density — SET removes symmetrically
+          from each sign population; RigL ranks by pure magnitude.
+        </p>
+
+        <figure class="cycle-figure">
+          <svg
+            viewBox="0 0 720 280"
+            xmlns="http://www.w3.org/2000/svg"
+            class="cycle-diagram"
+            role="img"
+            aria-labelledby="cycle-title cycle-desc"
+          >
+            <title id="cycle-title">Dynamic sparse training cycle</title>
+            <desc id="cycle-desc">
+              A four-stage cycle: Train, Score, Remove, Grow, repeating every K rewiring steps.
+            </desc>
+            <defs>
+              <marker
+                id="cyclearrow"
+                viewBox="0 0 12 12"
+                refX="10"
+                refY="6"
+                markerWidth="8"
+                markerHeight="8"
+                orient="auto"
+              >
+                <path d="M 0 0 L 12 6 L 0 12 L 3 6 Z" fill="currentColor" />
+              </marker>
+              <filter
+                id="cycleshadow"
+                x="-10%"
+                y="-10%"
+                width="120%"
+                height="140%"
+              >
+                <feDropShadow
+                  dx="0"
+                  dy="2"
+                  stdDeviation="3"
+                  flood-color="#841617"
+                  flood-opacity="0.12"
+                />
+              </filter>
+            </defs>
+
+            <path
+              d="M 635 140 C 635 100, 540 45, 470 45"
+              class="cycle-loop"
+            />
+            <path
+              d="M 250 45 C 180 45, 95 100, 95 140"
+              class="cycle-loop"
+              marker-end="url(#cyclearrow)"
+            />
+
+            <g class="cycle-badge">
+              <rect x="250" y="29" width="220" height="32" rx="16" />
+              <text x="360" y="50">repeat every K rewiring steps</text>
+            </g>
+
+            <g class="stage">
+              <rect
+                x="20"
+                y="140"
+                width="150"
+                height="100"
+                rx="6"
+                filter="url(#cycleshadow)"
+              />
+              <circle cx="42" cy="162" r="14" class="num" />
+              <text x="42" y="167" class="num-label">1</text>
+              <text x="95" y="185">Train</text>
+              <text x="95" y="210" class="sub">update active weights</text>
+            </g>
+
+            <path
+              d="M 175 190 L 198 190"
+              class="cycle-flow"
+              marker-end="url(#cyclearrow)"
+            />
+
+            <g class="stage">
+              <rect
+                x="200"
+                y="140"
+                width="150"
+                height="100"
+                rx="6"
+                filter="url(#cycleshadow)"
+              />
+              <circle cx="222" cy="162" r="14" class="num" />
+              <text x="222" y="167" class="num-label">2</text>
+              <text x="275" y="185">Score</text>
+              <text x="275" y="210" class="sub">rank by |w| or |&#8711;w|</text>
+            </g>
+
+            <path
+              d="M 355 190 L 378 190"
+              class="cycle-flow"
+              marker-end="url(#cyclearrow)"
+            />
+
+            <g class="stage">
+              <rect
+                x="380"
+                y="140"
+                width="150"
+                height="100"
+                rx="6"
+                filter="url(#cycleshadow)"
+              />
+              <circle cx="402" cy="162" r="14" class="num" />
+              <text x="402" y="167" class="num-label">3</text>
+              <text x="455" y="185">Remove</text>
+              <text x="455" y="210" class="sub">drop weakest edges</text>
+            </g>
+
+            <path
+              d="M 535 190 L 558 190"
+              class="cycle-flow"
+              marker-end="url(#cyclearrow)"
+            />
+
+            <g class="stage">
+              <rect
+                x="560"
+                y="140"
+                width="150"
+                height="100"
+                rx="6"
+                filter="url(#cycleshadow)"
+              />
+              <circle cx="582" cy="162" r="14" class="num" />
+              <text x="582" y="167" class="num-label">4</text>
+              <text x="635" y="185">Grow</text>
+              <text x="635" y="210" class="sub">SET: random / RigL: |&#8711;|</text>
+            </g>
+          </svg>
+          <figcaption>
+            <span class="figure-label">Schematic</span>
+            The DST cycle. <em>Remove</em>: SET drops the weights closest to zero from each
+            sign (sign-symmetric); RigL ranks by pure <code>|w|</code>.
+            <em>Grow</em>: SET adds new edges at random; RigL adds the inactive edges with
+            largest <code>|&#8711;w|</code>.
+          </figcaption>
+        </figure>
+
+        <h3>Map this to the demo below</h3>
+        <ul class="bullets">
+          <li><strong>Sparsity slider</strong> — the percentage of weights kept at zero.</li>
+          <li><strong>Rewire Every</strong> — the value of <em>K</em> in the loop above.</li>
+          <li><strong>Rewiring Method</strong> — toggles between <em>SET</em> and <em>RigL</em>.</li>
+          <li>
+            <strong>FLOPs &amp; Peak memory cards</strong> — live counters comparing what the
+            sparse model actually touches against a same-shape dense baseline.
+          </li>
+        </ul>
+        <p class="micro-note">
+          The savings appear immediately; whether the model can <em>recover dense-level
+          accuracy</em> as it rewires is the central question the rest of this article addresses.
+        </p>
+
         <p class="callout">
           The model used in the demo is intentionally tiny so that an entire training run finishes
           in a few seconds — small enough to demo live, large enough to show the dynamics clearly.
@@ -50,11 +281,11 @@
       <hr class="rule" />
 
       <section class="prose">
-        <h2><span class="section-number">03</span>How to read the visualization</h2>
+        <h2>How to read the visualization</h2>
         <p>
           The connectivity view animates each forward and backward pass: blue pulses mark
           feedforward, pink pulses mark backprop, and yellow highlights mark the rewiring epochs
-          where weak edges are pruned and new candidate edges are grown.
+          where weak edges are removed and new candidate edges are grown.
         </p>
         <p>
           The metrics panel tracks task loss and accuracy over time. Live FLOPs and memory
@@ -180,34 +411,183 @@
       <hr class="rule" />
 
       <section class="prose">
-        <h2><span class="section-number">04</span>Where this research goes next</h2>
+        <h2>From toy demo to empirical results</h2>
         <p>
-          The toy demo above is deliberately small, but the rewiring logic generalizes. Our
-          follow-up work pursues three threads.
+          The interactive figure above shows the mechanism. The question is whether it survives
+          contact with realistic models and datasets. The results below — together with a growing
+          body of literature — support a clear answer: dynamic sparse training (DST) can
+          simultaneously achieve scientific competitiveness and operational efficiency at scale.
         </p>
 
-        <h3>Scaling beyond toy tasks</h3>
+        <figure class="result-table-figure">
+          <figcaption class="result-table-caption">
+            <span class="figure-label">Table 1</span>
+            <span>Headline results — ResNet and ViT, dense vs. dynamic sparse training.</span>
+          </figcaption>
+          <div class="result-table-wrap">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Model</th>
+                  <th>Method</th>
+                  <th class="num">Energy (Wh)</th>
+                  <th class="num">Train Acc. (%)</th>
+                  <th class="num">Eval Acc. (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <th rowspan="2" class="rowhead">ResNet</th>
+                  <td>Dense</td>
+                  <td class="num">54.19</td>
+                  <td class="num">91.92</td>
+                  <td class="num">87.22</td>
+                </tr>
+                <tr class="row-dst">
+                  <td><strong>DST</strong></td>
+                  <td class="num"><strong>48.29</strong></td>
+                  <td class="num"><strong>93.96</strong></td>
+                  <td class="num"><strong>90.16</strong></td>
+                </tr>
+                <tr>
+                  <th rowspan="2" class="rowhead">ViT</th>
+                  <td>Dense</td>
+                  <td class="num">129.50</td>
+                  <td class="num">49.16</td>
+                  <td class="num">49.08</td>
+                </tr>
+                <tr class="row-dst">
+                  <td><strong>DST</strong></td>
+                  <td class="num"><strong>116.85</strong></td>
+                  <td class="num"><strong>65.04</strong></td>
+                  <td class="num"><strong>63.32</strong></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </figure>
+
+        <h3>Scientific competitiveness</h3>
         <p>
-          We apply the same rewiring logic to deeper models and larger datasets to measure
-          stability, convergence speed, and final quality under strict compute budgets.
+          Dense neural networks have long been treated as the standard for maximizing accuracy,
+          but recent research increasingly challenges that assumption. DST methods maintain a
+          <em>train–remove–regrow</em> mechanism, letting models continuously adapt their
+          connectivity and explore a larger effective parameter space during optimization. This
+          dynamic exploration — sometimes called
+          <em>in-time overparameterization</em><sup class="cite"><a href="#ref-3">3</a></sup> — allows
+          sparse models to generalize as well as, or better than, their dense counterparts despite
+          using far fewer active parameters.
+        </p>
+        <p>Our empirical experiments align with these findings:</p>
+        <ul class="bullets">
+          <li><strong>ResNet:</strong> DST improves evaluation accuracy from 87.22% → 90.16%.</li>
+          <li><strong>ViT:</strong> DST yields a substantial improvement from 49.08% → 63.32%.</li>
+        </ul>
+        <p>
+          These gains are consistent with prior work showing that DST can match or exceed dense
+          performance, and even improve robustness under challenging conditions; in some studies
+          sparse networks outperform dense ones across tasks while staying within the same
+          parameter budget.
         </p>
 
-        <h3>Adaptive rewiring schedules</h3>
+        <h3>Operational efficiency</h3>
         <p>
-          Instead of a fixed interval, we are testing trigger-based rewiring tied to gradient
-          saturation and plateau detection so that updates land where they matter most.
+          A major motivation for sparsity is reducing the computational and energy cost of deep
+          learning. Sparse networks activate only a subset of parameters at each step,
+          significantly reducing memory accesses and compute requirements, which translates
+          directly into lower energy consumption and improved scalability.
+        </p>
+        <p>Our results clearly demonstrate this:</p>
+        <ul class="bullets">
+          <li><strong>ResNet:</strong> ~11% reduction in energy (54.19 → 48.29 Wh).</li>
+          <li><strong>ViT:</strong> ~10% reduction in energy (129.50 → 116.85 Wh).</li>
+        </ul>
+        <p>
+          These improvements are consistent with broader findings that DST can reduce FLOPs,
+          training time, and memory usage — sometimes by large margins — without sacrificing
+          accuracy. Recent advances in structured sparsity show that DST can also deliver real
+          hardware speedups (up to 3× inference acceleration), addressing practical deployment
+          concerns.
         </p>
 
-        <h3>Hardware-aware sparse training</h3>
+        <div class="figure-grid">
+          <figure class="result-figure">
+            <img src="demo/resnet_acc%20.png" alt="ResNet training accuracy: dense vs DST" loading="lazy" />
+            <figcaption><span class="figure-label">Figure 2a</span> ResNet — training accuracy.</figcaption>
+          </figure>
+          <figure class="result-figure">
+            <img src="demo/vit_acc.png" alt="ViT training accuracy: dense vs DST" loading="lazy" />
+            <figcaption><span class="figure-label">Figure 2b</span> ViT — training accuracy.</figcaption>
+          </figure>
+          <figure class="result-figure">
+            <img src="demo/resnet_eva_acc.png" alt="ResNet evaluation accuracy: dense vs DST" loading="lazy" />
+            <figcaption><span class="figure-label">Figure 3a</span> ResNet — evaluation accuracy.</figcaption>
+          </figure>
+          <figure class="result-figure">
+            <img src="demo/vit_eva_acc.png" alt="ViT evaluation accuracy: dense vs DST" loading="lazy" />
+            <figcaption><span class="figure-label">Figure 3b</span> ViT — evaluation accuracy.</figcaption>
+          </figure>
+          <figure class="result-figure">
+            <img src="demo/resnet_energy.png" alt="ResNet cumulative training energy: dense vs DST" loading="lazy" />
+            <figcaption><span class="figure-label">Figure 4a</span> ResNet — cumulative training energy.</figcaption>
+          </figure>
+          <figure class="result-figure">
+            <img src="demo/vit_energy.png" alt="ViT cumulative training energy: dense vs DST" loading="lazy" />
+            <figcaption><span class="figure-label">Figure 4b</span> ViT — cumulative training energy.</figcaption>
+          </figure>
+        </div>
+
+        <h3>Bridging the gap to real-world deployment</h3>
         <p>
-          We are also investigating kernels and placement strategies that turn theoretical sparse
-          savings into measured wall-clock gains on modern accelerators.
+          Earlier concerns about sparsity focused on its limited hardware efficiency, especially
+          for unstructured sparse patterns. Modern research directions — such as energy-aware
+          sparsity — are closing this gap by making sparse computations more compatible with real
+          systems. DST also enables training under fixed resource budgets and supports scaling to
+          larger models by reallocating saved resources, which is especially relevant for
+          large-scale and energy-constrained environments.
+        </p>
+
+        <h3>Conclusion</h3>
+        <p>
+          Combining empirical evidence and prior research, dynamic sparse training is not only
+          competitive with dense training but can surpass it, while simultaneously reducing energy
+          and computational cost. Rather than introducing a trade-off, DST offers a synergistic
+          advantage: accuracy is maintained or improved through better exploration of parameter
+          space and implicit regularization, and efficiency improves through reduced computation
+          and memory usage. DST is therefore a scalable paradigm for real-world deployment,
+          particularly in the context of sustainable AI and large-scale deep learning systems.
         </p>
 
         <blockquote class="pullquote">
-          Can dynamic sparsity be both <em>scientifically competitive</em> and
-          <em>operationally efficient</em> at real deployment scale?
+          Dynamic sparsity is both <em>scientifically competitive</em> and
+          <em>operationally efficient</em> at real deployment scale.
         </blockquote>
+      </section>
+
+      <hr class="rule" />
+
+      <section class="prose references-section">
+        <h2>References</h2>
+        <ol class="references">
+          <li id="ref-1">
+            Mocanu, D. C., Mocanu, E., Stone, P., Nguyen, P. H., Gibescu, M., &amp; Liotta, A. (2018).
+            Scalable training of artificial neural networks with adaptive sparse connectivity inspired by network science.
+            <em>Nature Communications</em>, 9(1), 2383.
+            <a href="https://doi.org/10.1038/s41467-018-04316-3" target="_blank" rel="noopener">doi:10.1038/s41467-018-04316-3</a>
+          </li>
+          <li id="ref-2">
+            Evci, U., Gale, T., Menick, J., Castro, P. S., &amp; Elsen, E. (2020).
+            Rigging the lottery: Making all tickets winners.
+            In <em>Proceedings of the 37th International Conference on Machine Learning</em>.
+            <a href="https://arxiv.org/abs/1911.11134" target="_blank" rel="noopener">arXiv:1911.11134</a>
+          </li>
+          <li id="ref-3">
+            Liu, S., Yin, L., Mocanu, D. C., &amp; Pechenizkiy, M. (2021).
+            Do we actually need dense over-parameterization? In-time over-parameterization in sparse training.
+            In <em>Proceedings of the 38th International Conference on Machine Learning</em>.
+            <a href="https://arxiv.org/abs/2102.02887" target="_blank" rel="noopener">arXiv:2102.02887</a>
+          </li>
+        </ol>
       </section>
     </article>
 

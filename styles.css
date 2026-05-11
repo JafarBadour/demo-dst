@@ -451,6 +451,364 @@ canvas {
   font-weight: 600;
 }
 
+/* ---------- Cycle diagram (Section 02) ---------- */
+
+.cycle-figure {
+  margin: 28px 0 24px;
+  padding: 16px;
+  background: #ffffff;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+}
+
+.cycle-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin: 0 auto;
+  color: var(--accent);
+}
+
+.cycle-diagram .stage rect {
+  fill: #ffffff;
+  stroke: var(--rule);
+  stroke-width: 1.2;
+}
+
+.cycle-diagram .stage text {
+  font-family: Inter, system-ui, sans-serif;
+  fill: var(--text);
+  font-size: 14px;
+  font-weight: 600;
+  text-anchor: middle;
+}
+
+.cycle-diagram .stage text.sub {
+  fill: var(--muted);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.cycle-diagram .stage circle.num {
+  fill: var(--accent);
+  stroke: none;
+}
+
+.cycle-diagram .stage text.num-label {
+  fill: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.cycle-diagram .cycle-flow,
+.cycle-diagram .cycle-loop {
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+  stroke-linecap: round;
+}
+
+.cycle-diagram .cycle-badge rect {
+  fill: #ffffff;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.cycle-diagram .cycle-badge text {
+  fill: var(--accent);
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+
+.cycle-figure figcaption {
+  margin-top: 12px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ---------- Citations and references ---------- */
+
+.cite {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 0.7em;
+  font-weight: 600;
+  vertical-align: super;
+  line-height: 0;
+  margin: 0 1px;
+}
+
+.cite a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.cite a:hover {
+  text-decoration: underline;
+}
+
+.references-section ol.references {
+  margin: 0;
+  padding-left: 0;
+  list-style: none;
+  counter-reset: ref;
+}
+
+.references-section ol.references li {
+  counter-increment: ref;
+  position: relative;
+  padding: 4px 0 4px 36px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+  margin: 10px 0;
+  scroll-margin-top: 24px;
+  border-radius: 3px;
+  transition: background-color 200ms ease;
+}
+
+.references-section ol.references li::before {
+  content: "[" counter(ref) "]";
+  position: absolute;
+  left: 0;
+  top: 5px;
+  color: var(--accent);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.references-section ol.references li:target {
+  background: rgba(132, 22, 23, 0.06);
+  outline: 1px solid rgba(132, 22, 23, 0.18);
+  padding-left: 36px;
+}
+
+.references-section ol.references a {
+  word-break: break-word;
+}
+
+/* ---------- Bullet lists ---------- */
+
+.prose ul.bullets {
+  margin: 0 0 16px;
+  padding-left: 22px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text);
+}
+
+.prose ul.bullets li {
+  margin: 6px 0;
+}
+
+.prose ul.bullets li strong {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.prose ul.bullets.compact {
+  margin: 8px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.prose ul.bullets.compact li {
+  margin: 3px 0;
+}
+
+/* ---------- Method comparison cards (Section 02) ---------- */
+
+.method-cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin: 12px 0 16px;
+}
+
+.method-card {
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 14px 16px;
+}
+
+.method-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--rule);
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+.method-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: 0.01em;
+}
+
+.method-name .cite {
+  margin-left: 2px;
+}
+
+.method-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  font-weight: 600;
+  background: var(--surface);
+  padding: 3px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.prose .micro-note {
+  margin: 8px 0 18px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--muted);
+  font-style: italic;
+}
+
+/* ---------- Results table ---------- */
+
+.result-table-figure {
+  margin: 28px 0 24px;
+}
+
+.result-table-caption {
+  margin: 0 0 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.result-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #ffffff;
+}
+
+.results-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.results-table thead th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  background: var(--surface);
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.results-table tbody td,
+.results-table tbody th {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+
+.results-table tbody tr:last-child td,
+.results-table tbody tr:last-child th {
+  border-bottom: 0;
+}
+
+.results-table .rowhead {
+  font-weight: 600;
+  color: var(--text);
+  background: #fbf9f3;
+  border-right: 1px solid var(--rule);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.results-table th.num,
+.results-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+.results-table tr.row-dst td {
+  color: var(--accent);
+  background: rgba(132, 22, 23, 0.04);
+}
+
+.results-table tr.row-dst td strong {
+  color: var(--accent);
+}
+
+/* ---------- Result figures grid ---------- */
+
+.figure-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin: 28px 0 8px;
+}
+
+.result-figure {
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: #ffffff;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 3px;
+  background: #fff;
+}
+
+.result-figure figcaption {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.result-figure figcaption .figure-label {
+  margin-right: 2px;
+}
+
 /* ---------- Responsive ---------- */
 
 @media (max-width: 700px) {
@@ -464,5 +822,23 @@ canvas {
 
   .pullquote {
     font-size: 19px;
+  }
+
+  .figure-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .method-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .results-table {
+    font-size: 13px;
+  }
+
+  .results-table thead th,
+  .results-table tbody td,
+  .results-table tbody th {
+    padding: 8px 10px;
   }
 }

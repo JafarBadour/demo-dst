@@ -21,38 +21,16 @@
         <h2>Why dynamic sparse training?</h2>
         <p>
           Dynamic sparse training (DST) has been studied for roughly a decade, and a consistent
-          finding across that body of work is that sparse networks can match &mdash; and in some
-          settings exceed &mdash; the accuracy of their dense counterparts while using
-          substantially less memory and compute.
+          finding across that body of work is that sparse networks can match and exceed the
+          performance of their dense counterparts while using substantially less memory and
+          compute.
         </p>
         <p>
           As neural networks become the backbone of modern AI, that combination matters in two
           directions at once: DST eases the steep resource cost of training and serving today's
           largest models, and the rewiring dynamics also tend to improve the metrics that govern
-          learning quality, acting as an implicit regulariser of the exploration over parameter
-          space.
+          learning quality.
         </p>
-        <p>
-          These properties open three research threads we pursue, picked up in detail at the end
-          of this article:
-        </p>
-        <ul class="bullets">
-          <li>
-            <strong>Sparse reinforcement learning.</strong>
-            Understanding how remove-and-regrow dynamics behave under non-stationary targets and
-            noisy reward signals.
-          </li>
-          <li>
-            <strong>Sparse RL for resource allocation.</strong>
-            Adapting these algorithms to allocate compute, memory, and energy inside data-centre
-            environments.
-          </li>
-          <li>
-            <strong>Hardware-aware sparse models.</strong>
-            Turning theoretical sparsity savings into measured wall-clock gains on modern
-            accelerators.
-          </li>
-        </ul>
       </section>
 
       <hr class="rule" />

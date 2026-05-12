@@ -42,6 +42,9 @@ const ui = {
   memoryReadout: document.getElementById("memoryReadout"),
   memoryDenseReadout: document.getElementById("memoryDenseReadout"),
   memorySavedReadout: document.getElementById("memorySavedReadout"),
+  metricLabel: document.getElementById("metricLabel"),
+  metricReadout: document.getElementById("metricReadout"),
+  lossReadout: document.getElementById("lossReadout"),
   phaseBadge: document.getElementById("phaseBadge"),
   networkCanvas: document.getElementById("networkCanvas"),
   metricsCanvas: document.getElementById("metricsCanvas"),
@@ -844,6 +847,9 @@ function updateReadout() {
   ui.memoryReadout.textContent = formatBytes(state.usage.sparseMemoryPeakLive);
   ui.memoryDenseReadout.textContent = `Dense: ${formatBytes(state.usage.denseMemoryPeakLive)}`;
   ui.memorySavedReadout.textContent = `Live: ${state.usage.memorySavedLive.toFixed(1)}% saved vs dense`;
+  ui.metricLabel.textContent = metricName;
+  ui.metricReadout.textContent = `${(last.acc * 100).toFixed(1)}%`;
+  ui.lossReadout.textContent = last.loss.toFixed(4);
   ui.statsReadout.textContent =
     `Method: ${state.method.toUpperCase()}  |  Active: ${c.active}/${c.total} (${dens}% density)  |  Loss: ${last.loss.toFixed(
       4

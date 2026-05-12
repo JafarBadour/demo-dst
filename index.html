@@ -440,34 +440,28 @@
       <section class="prose misd-section">
         <h2>Where this research goes next?</h2>
         <p>
-          The toy demo above is deliberately small, but the rewiring logic generalises. Our
+          The toy demo above is deliberately small, but the rewiring logic generalizes. Our
           follow-up work pursues three threads.
         </p>
 
-        <h3>Understanding sparse reinforcement learning</h3>
+        <h3>Scaling beyond toy tasks up to the data centre level</h3>
         <p>
-          Sparse models behave differently in reinforcement learning than in supervised
-          settings: targets are non-stationary, rewards are noisy, and the policy itself
-          decides what data to collect. We characterise how remove-and-regrow dynamics
-          interact with these conditions &mdash; convergence properties across a family of
-          reward structures, the role of update frequency, and which rewiring choices stay
-          safe as the data distribution drifts.
+          We apply the same rewiring logic to deeper models and larger datasets to measure
+          stability, convergence speed, and final quality under strict compute budgets.
         </p>
 
         <h3>Reinforcement learning for resource allocation</h3>
         <p>
-          Building on that understanding, we adapt sparse RL to resource-allocation
-          problems in data-centre environments &mdash; scheduling compute, memory, and
-          energy under hard operational budgets. Sparsity here is not just a model-size
-          knob but part of the optimisation: the policy and the resources it controls are
-          sized together.
+          Understanding the sparse RL behaviour under constraints and adapting it for
+          resource allocation in data centres context. Focus on remove/regrow strategies,
+          frequency updates, convergence for a family of rewards, etc.
         </p>
 
-        <h3>Novel efficient sparse models suitable for data centres</h3>
+        <h3>Novel efficient sparse models suitable for data centers</h3>
         <p>
-          Hardware-aware sparse training paired with more advanced foundational
-          computational blocks &mdash; kernels and placement strategies that turn
-          theoretical sparse savings into measured wall-clock gains on modern accelerators.
+          We are currently investigating hardware-aware sparse training and more advanced
+          foundational computational blocks. Focus on kernels and placement strategies that
+          turn theoretical sparse savings into measured wall-clock gains on modern accelerators.
         </p>
       </section>
 

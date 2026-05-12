@@ -47,7 +47,7 @@
           <li>
             <strong>Density &amp; sparsity.</strong>
             Density is the fraction of weights that are active; sparsity is everything else.
-            E.g. <code>density = 0.2</code> ↔ <code>sparsity = 80%</code>.
+            E.g. <code>density = 20%</code> ↔ <code>sparsity = 80%</code>.
           </li>
           <li>
             <strong>Active vs. inactive.</strong>
@@ -284,15 +284,6 @@
             sparse model actually touches against a same-shape dense baseline.
           </li>
         </ul>
-        <p class="micro-note">
-          The savings appear immediately; whether the model can <em>recover dense-level
-          accuracy</em> as it rewires is what the demo below lets you watch directly.
-        </p>
-
-        <p class="callout">
-          The model used in the demo is intentionally tiny so that an entire training run finishes
-          in a few seconds — small enough to demo live, large enough to show the dynamics clearly.
-        </p>
       </section>
 
       <hr class="rule" />
